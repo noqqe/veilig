@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"os"
+	"strings"
 )
 
 var (
@@ -21,6 +22,14 @@ var (
 	Red         = "\033[38;5;210m"
 	Yellow      = "\033[38;5;229m"
 )
+
+var versions = map[uint16]string{
+	tls.VersionSSL30: "SSL",
+	tls.VersionTLS10: "TLS 1.0",
+	tls.VersionTLS11: "TLS 1.1",
+	tls.VersionTLS12: "TLS 1.2",
+	tls.VersionTLS13: "TLS 1.3",
+}
 
 // Does TLS Handshake
 func connect(host string) *tls.Conn {
@@ -41,19 +50,35 @@ func printCertificate(cert *x509.Certificate) bool {
 	fmt.Printf("Valid until:%s\t%s%s\n", Yellow, cert.NotAfter, Reset)
 	fmt.Printf("Is CA?:%s\t\t%t%s\n", Pink, cert.IsCA, Reset)
 	fmt.Printf("Algorithm:%s\t%s%s\n", Pink, cert.SignatureAlgorithm, Reset)
+
 	if len(cert.DNSNames) > 0 {
-		fmt.Printf("DNS Names:%s\t%s%s\n", Purple, cert.DNSNames, Reset)
+		fmt.Printf("DNS Names:%s\t%s%s\n", Purple, strings.Join(cert.DNSNames, ", "), Reset)
 	}
+
 	if len(cert.OCSPServer) > 0 {
-		fmt.Printf("OCSP Server:%s\t%s%s\n", Comment, cert.OCSPServer, Reset)
+		fmt.Printf("OCSP Server:%s\t%s%s\n", Comment, strings.Join(cert.OCSPServer, ", "), Reset)
 	}
+
 	return true
+}
+
+func verifyCertificate(cert *x509.Certificate, host string) {
+	if cert.IsCA == false {
+		err := cert.VerifyHostname(host)
+		if err == nil {
+			fmt.Printf("Name Valid:%s\ttrue%s\n", Green, Reset)
+		} else {
+			fmt.Printf("Name Valid:%s\t\t%s%s\n", Red, cert.VerifyHostname(host), Reset)
+		}
+	}
 }
 
 func Root(args []string) {
 
 	conn := connect(os.Args[1])
 	defer conn.Close()
+	state := conn.ConnectionState()
+	fmt.Printf("%sConnection: %s via %s using %s%s\n\n", Comment, conn.RemoteAddr(), versions[state.Version], tls.CipherSuiteName(state.CipherSuite), Reset)
 
 	for n, cert := range conn.ConnectionState().VerifiedChains[0] {
 		// Formatting
@@ -63,5 +88,7 @@ func Root(args []string) {
 		// Print Cert
 		fmt.Printf("%s%d. Certificate%s\n", Comment, n+1, Reset)
 		printCertificate(cert)
+		verifyCertificate(cert, strings.Split(os.Args[1], ":")[0])
+
 	}
 }
