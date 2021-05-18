@@ -1,9 +1,11 @@
 package main
 
-import "os"
+import (
+	"os"
 
-//import "github.com/noqqe/veilig/veilig"
+	"github.com/noqqe/veilig/veilig"
+)
 
 func main() {
-	root(os.Args)
+	veilig.Root(os.Args)
 }

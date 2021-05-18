@@ -50,7 +50,7 @@ func printCertificate(cert *x509.Certificate) bool {
 	return true
 }
 
-func root(args []string) {
+func Root(args []string) {
 
 	conn := connect(os.Args[1])
 	defer conn.Close()
