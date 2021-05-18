@@ -48,6 +48,7 @@ func printCertificate(cert *x509.Certificate) bool {
 	fmt.Printf("Subject:%s\t%s%s\n", Green, cert.Subject, Reset)
 	fmt.Printf("Valid from:%s\t%s%s\n", Yellow, cert.NotBefore, Reset)
 	fmt.Printf("Valid until:%s\t%s%s\n", Yellow, cert.NotAfter, Reset)
+	fmt.Printf("Issuer:%s\t\t%s%s\n", Cyan, cert.Issuer.Organization[0], Reset)
 	fmt.Printf("Is CA?:%s\t\t%t%s\n", Pink, cert.IsCA, Reset)
 	fmt.Printf("Algorithm:%s\t%s%s\n", Pink, cert.SignatureAlgorithm, Reset)
 
