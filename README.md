@@ -1,5 +1,7 @@
 # veilig
 
+![Go CI](https://github.com/noqqe/veilig/workflows/Go/badge.svg)
+
 Toy tls certificate viewer that I built because openssl s_client confuses me
 
 Source available at: https://github.com/noqqe/veilig/
@@ -17,6 +19,12 @@ or
 ```
 brew tap noqqe/tap
 brew install veilig
+```
+
+## Use
+
+```
+veilig github.com:443
 ```
 
 ## License
