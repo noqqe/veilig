@@ -4,8 +4,12 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"log"
 	"os"
 	"strings"
+	"time"
+
+	"github.com/urfave/cli/v2"
 )
 
 var (
@@ -76,20 +80,53 @@ func verifyCertificate(cert *x509.Certificate, host string) {
 
 func Root(args []string) {
 
-	conn := connect(os.Args[1])
-	defer conn.Close()
-	state := conn.ConnectionState()
-	fmt.Printf("%sConnection: %s via %s using %s%s\n\n", Comment, conn.RemoteAddr(), versions[state.Version], tls.CipherSuiteName(state.CipherSuite), Reset)
+	// Option Parser
+	app := &cli.App{
+		Name:     "veilig",
+		Version:  "0.0.5",
+		Compiled: time.Now(),
+		Description: `
+		veilig heise.de:443
 
-	for n, cert := range conn.ConnectionState().VerifiedChains[0] {
-		// Formatting
-		if n > 0 {
-			fmt.Println()
-		}
-		// Print Cert
-		fmt.Printf("%s%d. Certificate%s\n", Comment, n+1, Reset)
-		printCertificate(cert)
-		verifyCertificate(cert, strings.Split(os.Args[1], ":")[0])
+or
 
+veilig cert.pem
+		`,
+		Usage: "x509 Certificate Viewer",
+		Action: func(c *cli.Context) error {
+
+			// Check if argument is given
+			if c.NArg() == 0 {
+				cli.ShowAppHelp(c)
+				return nil
+			}
+
+			// Check if argument is file
+			_, err := os.Stat(c.Args().Get(0))
+			if !os.IsNotExist(err) {
+				log.Fatal("File does exist.")
+			}
+
+			// Check if argument is host:port
+			conn := connect(c.Args().Get(0))
+			defer conn.Close()
+			state := conn.ConnectionState()
+			fmt.Printf("%sConnection: %s via %s using %s%s\n\n", Comment, conn.RemoteAddr(), versions[state.Version], tls.CipherSuiteName(state.CipherSuite), Reset)
+
+			for n, cert := range conn.ConnectionState().VerifiedChains[0] {
+				// Formatting
+				if n > 0 {
+					fmt.Println()
+				}
+				// Print Cert
+				fmt.Printf("%s%d. Certificate%s\n", Comment, n+1, Reset)
+				printCertificate(cert)
+				verifyCertificate(cert, strings.Split(os.Args[1], ":")[0])
+			}
+			return nil
+		},
 	}
+
+	app.Run(os.Args)
+
 }
