@@ -19,6 +19,13 @@ brew tap noqqe/tap
 brew install veilig
 ```
 
+## Usage
+
+```
+veilig heise.de:443
+veilig lobste.rs:443
+```
+
 ## License
 
 Licensed under MIT license.
