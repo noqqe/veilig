@@ -1,11 +1,8 @@
 package veilig
 
 import (
-	"crypto/tls"
 	"crypto/x509"
-	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 	"time"
@@ -26,26 +23,9 @@ var (
 	Purple      = "\033[38;5;183m"
 	Red         = "\033[38;5;210m"
 	Yellow      = "\033[38;5;229m"
+	chain       []*x509.Certificate
+	verifyDNS   = false
 )
-
-var versions = map[uint16]string{
-	tls.VersionSSL30: "SSL",
-	tls.VersionTLS10: "TLS 1.0",
-	tls.VersionTLS11: "TLS 1.1",
-	tls.VersionTLS12: "TLS 1.2",
-	tls.VersionTLS13: "TLS 1.3",
-}
-
-// Does TLS Handshake
-func connect(host string) *tls.Conn {
-	conn, err := tls.Dial("tcp", host, nil)
-	if err != nil {
-		fmt.Println("Could not connect to", os.Args[1])
-		fmt.Println("Did you specify the port correctly?")
-		os.Exit(1)
-	}
-	return conn
-}
 
 // Takes certificate struct and prints values
 func printCertificate(cert *x509.Certificate) bool {
@@ -79,35 +59,6 @@ func verifyCertificate(cert *x509.Certificate, host string) {
 	}
 }
 
-// Source: https://gist.github.com/ukautz/cd118e298bbd8f0a88fc
-func LoadCertficateFromFile(path string) ([]*x509.Certificate, error) {
-	raw, err := ioutil.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-
-	var chain []*x509.Certificate
-	var cert *x509.Certificate
-	for {
-		block, rest := pem.Decode(raw)
-		if block == nil {
-			break
-		}
-		if block.Type == "CERTIFICATE" {
-			cert, err = x509.ParseCertificate(block.Bytes)
-			chain = append(chain, cert)
-			break
-		}
-		raw = rest
-	}
-
-	// if len(cert) == 0 {
-	// 	return nil, fmt.Errorf("No certificate found in \"%s\"", path)
-	// }
-
-	return chain, nil
-}
-
 func Root(args []string) {
 
 	// Option Parser
@@ -117,6 +68,7 @@ func Root(args []string) {
 		Compiled: time.Now(),
 		Description: `
 veilig heise.de:443
+veilig /tmp/cert.pem
 veilig cert.pem
 veilig https://lobste.rs
 		`,
@@ -132,36 +84,29 @@ veilig https://lobste.rs
 			// Check if argument is file
 			_, err := os.Stat(c.Args().Get(0))
 			if !os.IsNotExist(err) {
-				chain, err := LoadCertficateFromFile(c.Args().Get(0))
+				chain, err = LoadCertificateFromFile(c.Args().Get(0))
 				if err != nil {
 					fmt.Println(err)
 					return nil
 				}
-
-				for n, cert := range chain {
-					fmt.Printf("%s%d. Certificate%s\n", Comment, n+1, Reset)
-					printCertificate(cert)
-				}
-				return nil
+			} else {
+				chain, err = LoadCertificateFromTLS(c.Args().Get(0))
+				verifyDNS = true
 			}
 
-			// Check if argument is host:port
-			conn := connect(c.Args().Get(0))
-			defer conn.Close()
-			state := conn.ConnectionState()
-			fmt.Printf("%sConnection: %s via %s using %s%s\n\n", Comment, conn.RemoteAddr(), versions[state.Version], tls.CipherSuiteName(state.CipherSuite), Reset)
-
-			for n, cert := range conn.ConnectionState().VerifiedChains[0] {
-				// Formatting
+			// Print infos
+			for n, cert := range chain {
 				if n > 0 {
 					fmt.Println()
 				}
-				// Print Cert
 				fmt.Printf("%s%d. Certificate%s\n", Comment, n+1, Reset)
 				printCertificate(cert)
-				verifyCertificate(cert, strings.Split(os.Args[1], ":")[0])
+				if verifyDNS {
+					verifyCertificate(cert, strings.Split(os.Args[1], ":")[0])
+				}
 			}
 			return nil
+
 		},
 	}
 
