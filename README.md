@@ -31,5 +31,3 @@ veilig lobste.rs:443
 Licensed under MIT license.
 
 See [LICENSE.txt](https://raw.githubusercontent.com/noqqe/veilig/master/LICENSE.txt) file for details.
-
-Original work from
