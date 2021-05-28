@@ -21,9 +21,23 @@ brew install veilig
 
 ## Usage
 
+Using host:port combination
+
 ```
 veilig heise.de:443
 veilig lobste.rs:443
+```
+
+Using url schema:
+
+```
+veilig https://openbsd.org
+```
+
+Using local files 
+
+```
+veilig /tmp/cert.pem
 ```
 
 ## License
