@@ -4,7 +4,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"os"
+	"strings"
 )
 
 var versions = map[uint16]string{
@@ -16,20 +16,21 @@ var versions = map[uint16]string{
 }
 
 // Does TLS Handshake
-func connect(host string) *tls.Conn {
+func connect(host string) (*tls.Conn, error) {
 	conn, err := tls.Dial("tcp", host, nil)
 	if err != nil {
-		fmt.Println("Could not connect to", os.Args[1])
-		fmt.Println("Did you specify the port correctly?")
-		os.Exit(1)
+		return nil, fmt.Errorf("could not connect to \"%s\"", host)
 	}
-	return conn
+	return conn, nil
 }
 
-func LoadCertificateFromTLS(host string) ([]*x509.Certificate, error) {
+func LoadCertificateFromTLS(host string) ([]*x509.Certificate, string, error) {
 
 	// Check if argument is host:port
-	conn := connect(host)
+	conn, err := connect(host)
+	if err != nil {
+		return nil, "", err
+	}
 	defer conn.Close()
 	state := conn.ConnectionState()
 
@@ -38,5 +39,5 @@ func LoadCertificateFromTLS(host string) ([]*x509.Certificate, error) {
 	for _, cert := range conn.ConnectionState().VerifiedChains[0] {
 		chain = append(chain, cert)
 	}
-	return chain, nil
+	return chain, strings.Split(host, ":")[0], nil
 }

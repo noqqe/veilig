@@ -24,7 +24,7 @@ var (
 	Red         = "\033[38;5;210m"
 	Yellow      = "\033[38;5;229m"
 	chain       []*x509.Certificate
-	verifyDNS   = false
+	dnsname     string
 )
 
 // Takes certificate struct and prints values
@@ -90,8 +90,11 @@ veilig https://lobste.rs
 					return nil
 				}
 			} else {
-				chain, err = LoadCertificateFromTLS(c.Args().Get(0))
-				verifyDNS = true
+				if strings.Contains(c.Args().Get(0), "://") {
+					chain, dnsname, err = LoadCertificateFromURL(c.Args().Get(0))
+				} else {
+					chain, dnsname, err = LoadCertificateFromTLS(c.Args().Get(0))
+				}
 			}
 
 			// Print infos
@@ -101,8 +104,8 @@ veilig https://lobste.rs
 				}
 				fmt.Printf("%s%d. Certificate%s\n", Comment, n+1, Reset)
 				printCertificate(cert)
-				if verifyDNS {
-					verifyCertificate(cert, strings.Split(os.Args[1], ":")[0])
+				if len(dnsname) > 0 {
+					verifyCertificate(cert, dnsname)
 				}
 			}
 			return nil
