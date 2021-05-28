@@ -3,8 +3,9 @@ package veilig
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/pem"
 	"fmt"
-	"log"
+	"io/ioutil"
 	"os"
 	"strings"
 	"time"
@@ -78,6 +79,35 @@ func verifyCertificate(cert *x509.Certificate, host string) {
 	}
 }
 
+// Source: https://gist.github.com/ukautz/cd118e298bbd8f0a88fc
+func LoadCertficateFromFile(path string) ([]*x509.Certificate, error) {
+	raw, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	var chain []*x509.Certificate
+	var cert *x509.Certificate
+	for {
+		block, rest := pem.Decode(raw)
+		if block == nil {
+			break
+		}
+		if block.Type == "CERTIFICATE" {
+			cert, err = x509.ParseCertificate(block.Bytes)
+			chain = append(chain, cert)
+			break
+		}
+		raw = rest
+	}
+
+	// if len(cert) == 0 {
+	// 	return nil, fmt.Errorf("No certificate found in \"%s\"", path)
+	// }
+
+	return chain, nil
+}
+
 func Root(args []string) {
 
 	// Option Parser
@@ -86,11 +116,9 @@ func Root(args []string) {
 		Version:  "0.0.5",
 		Compiled: time.Now(),
 		Description: `
-		veilig heise.de:443
-
-or
-
+veilig heise.de:443
 veilig cert.pem
+veilig https://lobste.rs
 		`,
 		Usage: "x509 Certificate Viewer",
 		Action: func(c *cli.Context) error {
@@ -104,7 +132,17 @@ veilig cert.pem
 			// Check if argument is file
 			_, err := os.Stat(c.Args().Get(0))
 			if !os.IsNotExist(err) {
-				log.Fatal("File does exist.")
+				chain, err := LoadCertficateFromFile(c.Args().Get(0))
+				if err != nil {
+					fmt.Println(err)
+					return nil
+				}
+
+				for n, cert := range chain {
+					fmt.Printf("%s%d. Certificate%s\n", Comment, n+1, Reset)
+					printCertificate(cert)
+				}
+				return nil
 			}
 
 			// Check if argument is host:port
