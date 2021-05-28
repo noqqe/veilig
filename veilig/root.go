@@ -64,7 +64,7 @@ func Root(args []string) {
 	// Option Parser
 	app := &cli.App{
 		Name:     "veilig",
-		Version:  "0.0.5",
+		Version:  "1.0.1",
 		Compiled: time.Now(),
 		Description: `
 veilig heise.de:443
