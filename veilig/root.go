@@ -1,6 +1,7 @@
 package veilig
 
 import (
+	"crypto/rsa"
 	"crypto/x509"
 	"fmt"
 	"os"
@@ -30,12 +31,15 @@ var (
 // Takes certificate struct and prints values
 func printCertificate(cert *x509.Certificate) bool {
 
+	bits := cert.PublicKey.(*rsa.PublicKey)
+
 	fmt.Printf("Subject:%s\t%s%s\n", Green, cert.Subject, Reset)
 	fmt.Printf("Valid from:%s\t%s%s\n", Yellow, cert.NotBefore, Reset)
 	fmt.Printf("Valid until:%s\t%s%s\n", Yellow, cert.NotAfter, Reset)
 	fmt.Printf("Issuer:%s\t\t%s%s\n", Cyan, cert.Issuer.Organization[0], Reset)
 	fmt.Printf("Is CA?:%s\t\t%t%s\n", Pink, cert.IsCA, Reset)
-	fmt.Printf("Algorithm:%s\t%s%s\n", Pink, cert.SignatureAlgorithm, Reset)
+	fmt.Printf("Signature:%s\t%s%s\n", Pink, cert.SignatureAlgorithm, Reset)
+	fmt.Printf("PublicKey:%s\t%s (%d bits)%s\n", Pink, cert.PublicKeyAlgorithm, bits.Size()*8, Reset)
 
 	if len(cert.DNSNames) > 0 {
 		fmt.Printf("DNS Names:%s\t%s%s\n", Purple, strings.Join(cert.DNSNames, ", "), Reset)
