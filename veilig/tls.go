@@ -4,7 +4,9 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"net"
 	"strings"
+	"time"
 )
 
 var versions = map[uint16]string{
@@ -15,9 +17,13 @@ var versions = map[uint16]string{
 	tls.VersionTLS13: "TLS 1.3",
 }
 
+var dialer = net.Dialer{
+	Timeout: time.Second * 2,
+}
+
 // Does TLS Handshake
 func connect(host string) (*tls.Conn, error) {
-	conn, err := tls.Dial("tcp", host, nil)
+	conn, err := tls.DialWithDialer(&dialer, "tcp", host, nil)
 	if err != nil {
 		return nil, fmt.Errorf("could not connect to \"%s\"", host)
 	}

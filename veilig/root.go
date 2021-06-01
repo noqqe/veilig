@@ -27,6 +27,7 @@ var (
 	Yellow      = "\033[38;5;229m"
 	chain       []*x509.Certificate
 	dnsname     string
+	success     = 0
 )
 
 // Takes certificate struct and prints values
@@ -99,18 +100,26 @@ veilig https://lobste.rs
 			_, err := os.Stat(c.Args().Get(0))
 			if !os.IsNotExist(err) {
 				chain, err = LoadCertificateFromFile(c.Args().Get(0))
-				if err != nil {
-					fmt.Println(err)
-					return nil
+				if err == nil {
+					success++
 				}
 			} else {
 				if strings.Contains(c.Args().Get(0), "://") {
 					chain, dnsname, err = LoadCertificateFromURL(c.Args().Get(0))
+					if err == nil {
+						success++
+					}
 				} else {
 					chain, dnsname, err = LoadCertificateFromTLS(c.Args().Get(0))
+					if err == nil {
+						success++
+					}
 				}
 			}
 
+			if success == 0 {
+				fmt.Printf("%sError connecting to or reading file from: %s%s\n", Red, c.Args().Get(0), Reset)
+			}
 			// Print infos
 			for n, cert := range chain {
 				if n > 0 {
