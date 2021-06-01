@@ -1,6 +1,7 @@
 package veilig
 
 import (
+	"crypto/ecdsa"
 	"crypto/rsa"
 	"crypto/x509"
 	"fmt"
@@ -31,15 +32,24 @@ var (
 // Takes certificate struct and prints values
 func printCertificate(cert *x509.Certificate) bool {
 
-	bits := cert.PublicKey.(*rsa.PublicKey)
-
 	fmt.Printf("Subject:%s\t%s%s\n", Green, cert.Subject, Reset)
 	fmt.Printf("Valid from:%s\t%s%s\n", Yellow, cert.NotBefore, Reset)
 	fmt.Printf("Valid until:%s\t%s%s\n", Yellow, cert.NotAfter, Reset)
 	fmt.Printf("Issuer:%s\t\t%s%s\n", Cyan, cert.Issuer.Organization[0], Reset)
 	fmt.Printf("Is CA:%s\t\t%t%s\n", Pink, cert.IsCA, Reset)
 	fmt.Printf("Signature:%s\t%s%s\n", Pink, cert.SignatureAlgorithm, Reset)
-	fmt.Printf("PublicKey:%s\t%s (%d bits)%s\n", Pink, cert.PublicKeyAlgorithm, bits.Size()*8, Reset)
+
+	switch cert.PublicKey.(type) {
+	case *rsa.PublicKey:
+		bits := cert.PublicKey.(*rsa.PublicKey)
+		fmt.Printf("PublicKey:%s\t%s (%d bits)%s\n", Pink, cert.PublicKeyAlgorithm, bits.Size()*8, Reset)
+	case *ecdsa.PublicKey:
+		curve := cert.PublicKey.(*ecdsa.PublicKey)
+		params := curve.Params()
+		fmt.Printf("PublicKey:%s\t%s %v (%d bits)%s\n", Pink, cert.PublicKeyAlgorithm, params.Name, params.BitSize, Reset)
+	default:
+		fmt.Printf("PublicKey:%s\t%s%s\n", Pink, cert.PublicKeyAlgorithm, Reset)
+	}
 
 	if len(cert.DNSNames) > 0 {
 		fmt.Printf("DNS Names:%s\t%s%s\n", Purple, strings.Join(cert.DNSNames, ", "), Reset)
