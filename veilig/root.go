@@ -1,6 +1,7 @@
 package veilig
 
 import (
+	"crypto/rsa"
 	"crypto/x509"
 	"fmt"
 	"os"
@@ -24,18 +25,21 @@ var (
 	Red         = "\033[38;5;210m"
 	Yellow      = "\033[38;5;229m"
 	chain       []*x509.Certificate
-	verifyDNS   = false
+	dnsname     string
 )
 
 // Takes certificate struct and prints values
 func printCertificate(cert *x509.Certificate) bool {
+
+	bits := cert.PublicKey.(*rsa.PublicKey)
 
 	fmt.Printf("Subject:%s\t%s%s\n", Green, cert.Subject, Reset)
 	fmt.Printf("Valid from:%s\t%s%s\n", Yellow, cert.NotBefore, Reset)
 	fmt.Printf("Valid until:%s\t%s%s\n", Yellow, cert.NotAfter, Reset)
 	fmt.Printf("Issuer:%s\t\t%s%s\n", Cyan, cert.Issuer.Organization[0], Reset)
 	fmt.Printf("Is CA:%s\t\t%t%s\n", Pink, cert.IsCA, Reset)
-	fmt.Printf("Algorithm:%s\t%s%s\n", Pink, cert.SignatureAlgorithm, Reset)
+	fmt.Printf("Signature:%s\t%s%s\n", Pink, cert.SignatureAlgorithm, Reset)
+	fmt.Printf("PublicKey:%s\t%s (%d bits)%s\n", Pink, cert.PublicKeyAlgorithm, bits.Size()*8, Reset)
 
 	if len(cert.DNSNames) > 0 {
 		fmt.Printf("DNS Names:%s\t%s%s\n", Purple, strings.Join(cert.DNSNames, ", "), Reset)
@@ -64,7 +68,7 @@ func Root(args []string) {
 	// Option Parser
 	app := &cli.App{
 		Name:     "veilig",
-		Version:  "0.0.5",
+		Version:  "1.1.0",
 		Compiled: time.Now(),
 		Description: `
 veilig heise.de:443
@@ -90,8 +94,11 @@ veilig https://lobste.rs
 					return nil
 				}
 			} else {
-				chain, err = LoadCertificateFromTLS(c.Args().Get(0))
-				verifyDNS = true
+				if strings.Contains(c.Args().Get(0), "://") {
+					chain, dnsname, err = LoadCertificateFromURL(c.Args().Get(0))
+				} else {
+					chain, dnsname, err = LoadCertificateFromTLS(c.Args().Get(0))
+				}
 			}
 
 			// Print infos
@@ -101,8 +108,8 @@ veilig https://lobste.rs
 				}
 				fmt.Printf("%s%d. Certificate%s\n", Comment, n+1, Reset)
 				printCertificate(cert)
-				if verifyDNS {
-					verifyCertificate(cert, strings.Split(os.Args[1], ":")[0])
+				if len(dnsname) > 0 {
+					verifyCertificate(cert, dnsname)
 				}
 			}
 			return nil
