@@ -1,0 +1,18 @@
+# https://taskfile.dev
+
+version: '3'
+
+tasks:
+  build:
+    cmds:
+      - go build -ldflags "-X github.com/noqqe/veilig/src/serra.Version=`git describe --tags`"  -v veilig.go
+    sources:
+      - "src/veilig/**/*.go"
+      - "veilig.go"
+    generates:
+      - "./veilig"
+
+  default:
+    cmds:
+      - task: build
+

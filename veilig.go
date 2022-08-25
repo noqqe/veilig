@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/noqqe/veilig/veilig"
+	"github.com/noqqe/veilig/src/veilig"
 )
 
 func main() {
