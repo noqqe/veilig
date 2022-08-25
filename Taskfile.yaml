@@ -12,6 +12,13 @@ tasks:
     generates:
       - "./veilig"
 
+  release:
+    interactive: true 
+    cmds:
+      - git tag $(read)
+      - git push --tags
+      - goreleaser release --rm-dist
+
   default:
     cmds:
       - task: build
