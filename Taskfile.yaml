@@ -15,7 +15,7 @@ tasks:
   release:
     interactive: true 
     cmds:
-      - git tag $(read)
+      - read -p "Version v1.1.1: " version ; git tag $version
       - git push --tags
       - goreleaser release --rm-dist
 
