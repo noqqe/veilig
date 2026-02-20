@@ -42,8 +42,6 @@ func LoadCertificateFromTLS(host string) ([]*x509.Certificate, string, error) {
 
 	fmt.Printf("%sConnection: %s via %s using %s%s\n\n", Comment, conn.RemoteAddr(), versions[state.Version], tls.CipherSuiteName(state.CipherSuite), Reset)
 
-	for _, cert := range conn.ConnectionState().VerifiedChains[0] {
-		chain = append(chain, cert)
-	}
+	chain = append(chain, conn.ConnectionState().VerifiedChains[0]...)
 	return chain, strings.Split(host, ":")[0], nil
 }

@@ -1,3 +1,4 @@
+// Package veilig is a toy ssl tls cert viewer
 package veilig
 
 import (
@@ -69,7 +70,7 @@ func printCertificate(cert *x509.Certificate) bool {
 }
 
 func verifyCertificate(cert *x509.Certificate, host string) {
-	if cert.IsCA == false {
+	if !cert.IsCA {
 		err := cert.VerifyHostname(host)
 		if err == nil {
 			fmt.Printf("Name Valid:%s\ttrue%s\n", Green, Reset)

@@ -4,14 +4,14 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"os"
 )
 
+// LoadCertificateFromFile reads the cert from file
 // Source: https://gist.github.com/ukautz/cd118e298bbd8f0a88fc
 func LoadCertificateFromFile(path string) ([]*x509.Certificate, error) {
 
-	raw, err := ioutil.ReadFile(path)
+	raw, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
@@ -28,13 +28,16 @@ func LoadCertificateFromFile(path string) ([]*x509.Certificate, error) {
 		}
 		if block.Type == "CERTIFICATE" {
 			cert, err = x509.ParseCertificate(block.Bytes)
+			if err != nil {
+				return nil, fmt.Errorf("could not parse certificate in \"%s\": %v", path, err)
+			}
 			chain = append(chain, cert)
 		}
 		raw = rest
 	}
 
 	if len(chain) == 0 {
-		return nil, fmt.Errorf("No certificate found in \"%s\"", path)
+		return nil, fmt.Errorf("no certificate found in \"%s\"", path)
 	}
 
 	fmt.Printf("%sFile: %s (%d bytes) with %d certificate(s)%s\n\n", Comment, path, size, len(chain), Reset)
