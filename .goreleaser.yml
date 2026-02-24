@@ -12,10 +12,9 @@ builds:
       - darwin
       - openbsd
     ldflags:
-      - -X github.com/noqqe/veilig/pkg/veilig.Version={{.Tag}}
+      - -X github.com/noqqe/veilig/src/veilig.Version={{.Tag}}
     flags:
       - -v
-    main: veilig.go
 archives:
   - id: veilig
     name_template: >-
