@@ -65,7 +65,7 @@ func verifyCertificate(cert *x509.Certificate, host string) {
 		if err == nil {
 			color.Green("Name Valid:\t%s\n", "true")
 		} else {
-			color.Red("Name Valid:\t\t%s\n", cert.VerifyHostname(host))
+			color.Red("Name Valid:\t%s%s\n", "false: ", cert.VerifyHostname(host))
 		}
 	}
 }

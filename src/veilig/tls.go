@@ -25,7 +25,11 @@ var dialer = net.Dialer{
 
 // Does TLS Handshake
 func connect(host string) (*tls.Conn, error) {
-	conn, err := tls.DialWithDialer(&dialer, "tcp", host, nil)
+	config := &tls.Config{
+		MinVersion:         tls.VersionSSL30,
+		InsecureSkipVerify: true,
+	}
+	conn, err := tls.DialWithDialer(&dialer, "tcp", host, config)
 	if err != nil {
 		return nil, fmt.Errorf("could not connect to \"%s\"", host)
 	}
@@ -44,6 +48,8 @@ func LoadCertificateFromTLS(host string) ([]*x509.Certificate, string, error) {
 
 	color.HiBlack("Connection: %s via %s using %s\n\n", conn.RemoteAddr(), versions[state.Version], tls.CipherSuiteName(state.CipherSuite))
 
-	chain = append(chain, conn.ConnectionState().VerifiedChains[0]...)
+	if len(conn.ConnectionState().PeerCertificates) > 0 {
+		chain = append(chain, conn.ConnectionState().PeerCertificates...)
+	}
 	return chain, strings.Split(host, ":")[0], nil
 }
