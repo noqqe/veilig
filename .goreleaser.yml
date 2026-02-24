@@ -15,7 +15,7 @@ builds:
       - -X github.com/noqqe/veilig/pkg/veilig.Version={{.Tag}}
     flags:
       - -v
-    main: ./cmd/veilig
+    main: veilig.go
 archives:
   - id: veilig
     name_template: >-
