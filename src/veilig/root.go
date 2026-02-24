@@ -13,58 +13,47 @@ import (
 	"strings"
 	"time"
 
+	color "github.com/fatih/color"
 	"github.com/urfave/cli/v2"
 )
 
 var (
-	Reset       = "\033[0m"
-	Background  = "\033[38;5;59m"
-	CurrentLine = "\033[38;5;60m"
-	Foreground  = "\033[38;5;231m"
-	Comment     = "\033[38;5;103m"
-	Cyan        = "\033[38;5;159m"
-	Green       = "\033[38;5;120m"
-	Orange      = "\033[38;5;222m"
-	Pink        = "\033[38;5;212m"
-	Purple      = "\033[38;5;183m"
-	Red         = "\033[38;5;210m"
-	Yellow      = "\033[38;5;229m"
-	chain       []*x509.Certificate
-	Version     = "unknown"
+	chain   []*x509.Certificate
+	Version = "unknown"
 )
 
 // Takes certificate struct and prints values
 func printCertificate(cert *x509.Certificate) bool {
 
-	fmt.Printf("Subject:%s\t%s%s\n", Green, cert.Subject, Reset)
-	fmt.Printf("Valid from:%s\t%s%s\n", Yellow, cert.NotBefore, Reset)
-	fmt.Printf("Valid until:%s\t%s%s\n", Yellow, cert.NotAfter, Reset)
+	color.Green("Subject:\t%s\n", cert.Subject)
+	color.Yellow("Valid from:\t%s\n", cert.NotBefore)
+	color.Yellow("Valid until:\t%s\n", cert.NotAfter)
 
 	if len(cert.Issuer.Organization) > 0 {
-		fmt.Printf("Issuer:%s\t\t%s%s\n", Cyan, cert.Issuer.Organization[0], Reset)
+		color.Cyan("Issuer:\t\t%s\n", cert.Issuer.Organization[0])
 	}
 
-	fmt.Printf("Is CA:%s\t\t%t%s\n", Pink, cert.IsCA, Reset)
-	fmt.Printf("Signature:%s\t%s%s\n", Pink, cert.SignatureAlgorithm, Reset)
+	color.HiCyan("Is CA:\t\t%t\n", cert.IsCA)
+	color.HiMagenta("Signature:\t%s\n", cert.SignatureAlgorithm)
 
 	switch cert.PublicKey.(type) {
 	case *rsa.PublicKey:
 		bits := cert.PublicKey.(*rsa.PublicKey)
-		fmt.Printf("PublicKey:%s\t%s (%d bits)%s\n", Pink, cert.PublicKeyAlgorithm, bits.Size()*8, Reset)
+		color.HiMagenta("PublicKey:\t%s (%d bits)\n", cert.PublicKeyAlgorithm, bits.Size()*8)
 	case *ecdsa.PublicKey:
 		curve := cert.PublicKey.(*ecdsa.PublicKey)
 		params := curve.Params()
-		fmt.Printf("PublicKey:%s\t%s %v (%d bits)%s\n", Pink, cert.PublicKeyAlgorithm, params.Name, params.BitSize, Reset)
+		color.HiMagenta("PublicKey:\t%s %v (%d bits)\n", cert.PublicKeyAlgorithm, params.Name, params.BitSize)
 	default:
-		fmt.Printf("PublicKey:%s\t%s%s\n", Pink, cert.PublicKeyAlgorithm, Reset)
+		color.HiMagenta("PublicKey:%s\t%s%s\n", cert.PublicKeyAlgorithm)
 	}
 
 	if len(cert.DNSNames) > 0 {
-		fmt.Printf("DNS Names:%s\t%s%s\n", Purple, strings.Join(cert.DNSNames, ", "), Reset)
+		color.HiCyan("DNS Names:\t%s\n", strings.Join(cert.DNSNames, ", "))
 	}
 
 	if len(cert.OCSPServer) > 0 {
-		fmt.Printf("OCSP Server:%s\t%s%s\n", Comment, strings.Join(cert.OCSPServer, ", "), Reset)
+		color.HiBlue("OCSP Server:\t%s\n", strings.Join(cert.OCSPServer, ", "))
 	}
 
 	return true
@@ -74,9 +63,9 @@ func verifyCertificate(cert *x509.Certificate, host string) {
 	if !cert.IsCA {
 		err := cert.VerifyHostname(host)
 		if err == nil {
-			fmt.Printf("Name Valid:%s\ttrue%s\n", Green, Reset)
+			color.Green("Name Valid:\t%s\n", "true")
 		} else {
-			fmt.Printf("Name Valid:%s\t\t%s%s\n", Red, cert.VerifyHostname(host), Reset)
+			color.Red("Name Valid:\t\t%s\n", cert.VerifyHostname(host))
 		}
 	}
 }
@@ -167,7 +156,7 @@ veilig https://lobste.rs
 				if n > 0 {
 					fmt.Println()
 				}
-				fmt.Printf("%s%d. Certificate%s\n", Comment, n+1, Reset)
+				color.White("%d. Certificate\n", n+1)
 				printCertificate(cert)
 				if len(dnsname) > 0 {
 					verifyCertificate(cert, dnsname)

@@ -7,6 +7,8 @@ import (
 	"net"
 	"strings"
 	"time"
+
+	"github.com/fatih/color"
 )
 
 var versions = map[uint16]string{
@@ -40,7 +42,7 @@ func LoadCertificateFromTLS(host string) ([]*x509.Certificate, string, error) {
 	defer conn.Close()
 	state := conn.ConnectionState()
 
-	fmt.Printf("%sConnection: %s via %s using %s%s\n\n", Comment, conn.RemoteAddr(), versions[state.Version], tls.CipherSuiteName(state.CipherSuite), Reset)
+	color.HiBlack("Connection: %s via %s using %s\n\n", conn.RemoteAddr(), versions[state.Version], tls.CipherSuiteName(state.CipherSuite))
 
 	chain = append(chain, conn.ConnectionState().VerifiedChains[0]...)
 	return chain, strings.Split(host, ":")[0], nil

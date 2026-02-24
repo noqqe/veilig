@@ -5,6 +5,8 @@ import (
 	"encoding/pem"
 	"fmt"
 	"os"
+
+	"github.com/fatih/color"
 )
 
 // LoadCertificateFromFile reads the cert from file
@@ -40,7 +42,7 @@ func LoadCertificateFromFile(path string) ([]*x509.Certificate, error) {
 		return nil, fmt.Errorf("no certificate found in \"%s\"", path)
 	}
 
-	fmt.Printf("%sFile: %s (%d bytes) with %d certificate(s)%s\n\n", Comment, path, size, len(chain), Reset)
+	color.HiBlack("File: %s (%d bytes) with %d certificate(s)\n\n", path, size, len(chain))
 
 	return chain, nil
 }
