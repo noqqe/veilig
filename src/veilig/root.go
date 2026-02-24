@@ -6,7 +6,10 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"fmt"
+	"net"
+	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -27,8 +30,6 @@ var (
 	Red         = "\033[38;5;210m"
 	Yellow      = "\033[38;5;229m"
 	chain       []*x509.Certificate
-	dnsname     string
-	success     = 0
 	Version     = "unknown"
 )
 
@@ -80,6 +81,38 @@ func verifyCertificate(cert *x509.Certificate, host string) {
 	}
 }
 
+// Check if the argument is a file
+func isFile(arg string) bool {
+	_, err := os.Stat(arg)
+	return !os.IsNotExist(err)
+}
+
+// Check if the argument is a valid URL
+func isURL(arg string) bool {
+	_, err := url.ParseRequestURI(arg)
+	return err == nil
+}
+
+// Check if the argument is in host:port format
+func isHostPort(arg string) bool {
+	hostPort := strings.Split(arg, ":")
+	if len(hostPort) != 2 {
+		return false
+	}
+	host := hostPort[0]
+	port := hostPort[1]
+
+	// Validate port
+	portNum, err := strconv.Atoi(port)
+	if err != nil || portNum < 1 || portNum > 65535 {
+		return false
+	}
+
+	// Check if the host can be resolved
+	_, err = net.LookupHost(host)
+	return err == nil
+}
+
 func Root(args []string) {
 
 	// Option Parser
@@ -102,30 +135,33 @@ veilig https://lobste.rs
 				return nil
 			}
 
-			// Check if argument is file
-			_, err := os.Stat(c.Args().Get(0))
-			if !os.IsNotExist(err) {
-				chain, err = LoadCertificateFromFile(c.Args().Get(0))
-				if err == nil {
-					success++
+			// initialize variables
+			arg := c.Args().Get(0)
+			var chain []*x509.Certificate
+			var dnsname string
+			var err error
+
+			switch {
+			case isFile(arg):
+				chain, err = LoadCertificateFromFile(arg)
+				if err != nil {
+					fmt.Println("Error loading certificate from file:", err)
 				}
-			} else {
-				if strings.Contains(c.Args().Get(0), "://") {
-					chain, dnsname, err = LoadCertificateFromURL(c.Args().Get(0))
-					if err == nil {
-						success++
-					}
-				} else {
-					chain, dnsname, err = LoadCertificateFromTLS(c.Args().Get(0))
-					if err == nil {
-						success++
-					}
+			case isHostPort(arg):
+				chain, dnsname, err = LoadCertificateFromTLS(arg)
+				if err != nil {
+					fmt.Println("Error loading certificate from TLS:", err)
 				}
+			case isURL(arg):
+				chain, dnsname, err = LoadCertificateFromURL(arg)
+				if err != nil {
+					fmt.Println("Error loading certificate from URL:", err)
+				}
+			default:
+				fmt.Println("Invalid argument format:", arg)
+				cli.ShowAppHelp(c)
 			}
 
-			if success == 0 {
-				fmt.Printf("%sError connecting to or reading file from: %s%s\n", Red, c.Args().Get(0), Reset)
-			}
 			// Print infos
 			for n, cert := range chain {
 				if n > 0 {
