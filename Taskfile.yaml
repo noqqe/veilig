@@ -20,6 +20,26 @@ tasks:
       - git push --tags
       - goreleaser release --clean
 
+  test:
+    interactive: true
+    deps: 
+      - build
+    dir: test
+    cmds:
+      - ../veilig certificates/doesnotexist.crt 1>/dev/null || true 
+      - ../veilig certificates/expired.crt 1>/dev/null
+      - ../veilig certificates/valid.crt 1>/dev/null
+      - ../veilig heise.de 1>/dev/null || true
+      - ../veilig https://heise.de 1>/dev/null || true
+      - ../veilig localhost:7443 1>/dev/null
+      - ../veilig localhost:8443 1>/dev/null
+      - ../veilig https://localhost:7443 1>/dev/null
+      - ../veilig https://localhost:8443 1>/dev/null
+  
+  
+      
+
+
   default:
     cmds:
       - task: build
