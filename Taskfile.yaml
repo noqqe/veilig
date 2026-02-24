@@ -31,10 +31,10 @@ tasks:
       - ../veilig certificates/valid.crt 1>/dev/null
       - ../veilig heise.de 1>/dev/null || true
       - ../veilig https://heise.de 1>/dev/null || true
-      - ../veilig localhost:7443 1>/dev/null
-      - ../veilig localhost:8443 1>/dev/null
-      - ../veilig https://localhost:7443 1>/dev/null
-      - ../veilig https://localhost:8443 1>/dev/null
+      - ../veilig 127.0.0.1:7443 1>/dev/null
+      - ../veilig 127.0.0.1:8443 1>/dev/null
+      - ../veilig https://127.0.0.1:7443 1>/dev/null
+      - ../veilig https://127.0.0.1:8443 1>/dev/null
   
   
       

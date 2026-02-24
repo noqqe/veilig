@@ -137,16 +137,16 @@ veilig https://lobste.rs
 					fmt.Println("Error loading certificate from file:", err)
 					os.Exit(1)
 				}
-			case isHostPort(arg):
-				chain, dnsname, err = LoadCertificateFromTLS(arg)
-				if err != nil {
-					fmt.Println("Error loading certificate from TLS:", err)
-					os.Exit(1)
-				}
 			case isURL(arg):
 				chain, dnsname, err = LoadCertificateFromURL(arg)
 				if err != nil {
 					fmt.Println("Error loading certificate from URL:", err)
+					os.Exit(1)
+				}
+			case isHostPort(arg):
+				chain, dnsname, err = LoadCertificateFromTLS(arg)
+				if err != nil {
+					fmt.Println("Error loading certificate from TLS:", err)
 					os.Exit(1)
 				}
 			default:
