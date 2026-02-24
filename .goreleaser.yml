@@ -1,10 +1,7 @@
-# This is an example .goreleaser.yml file with some sane defaults.
-# Make sure to check the documentation at http://goreleaser.com
+version: 2
 before:
   hooks:
-    # You may remove this if you don't use go modules.
     - go mod tidy
-    # you may remove this if you don't need go generate
     - go generate ./...
 builds:
   - env:
@@ -14,18 +11,19 @@ builds:
       - windows
       - darwin
       - openbsd
+    ldflags:
+      - -X github.com/noqqe/veilig/pkg/veilig.Version={{.Tag}}
+    flags:
+      - -v
+    main: ./cmd/veilig
 archives:
-  - id: ipcalc
+  - id: veilig
     name_template: >-
       {{ .ProjectName }}_
       {{- title .Os }}_
       {{- if eq .Arch "amd64" }}x86_64
       {{- else if eq .Arch "386" }}i386
       {{- else }}{{ .Arch }}{{ end }}
-checksum:
-  name_template: 'checksums.txt'
-snapshot:
-  name_template: "{{ .Tag }}-next"
 changelog:
   sort: asc
   filters:
@@ -33,65 +31,20 @@ changelog:
       - '^docs:'
       - '^test:'
 brews:
-  -
-    # Name template of the recipe
-    # Default to project name
-    name: veilig
-
-    # GOARM to specify which 32-bit arm version to use if there are multiple versions
-    # from the build section. Brew formulas support atm only one 32-bit version.
-    # Default is 6 for all artifacts or each id if there a multiple versions.
+  - name: veilig
     goarm: 6
-
-    # NOTE: make sure the url_template, the token and given repo (github or gitlab) owner and name are from the
-    # same kind. We will probably unify this in the next major version like it is done with scoop.
-
-    # GitHub/GitLab repository to push the formula to
-    # Gitea is not supported yet, but the support coming
-    tap:
+    repository:
       owner: noqqe
       name: homebrew-tap
-      # Optionally a token can be provided, if it differs from the token provided to GoReleaser
-
-    # Allows you to set a custom download strategy. Note that you'll need
-    # to implement the strategy and add it to your tap repository.
-    # Example: https://docs.brew.sh/Formula-Cookbook#specifying-the-download-strategy-explicitly
-    # Default is empty.
     download_strategy: CurlDownloadStrategy
-
-    # Git author used to commit to the repository.
-    # Defaults are shown.
+    directory: Formula
     commit_author:
       name: goreleaserbot
       email: goreleaser@carlosbecker.com
-
-    # Folder inside the repository to put the formula.
-    # Default is the root folder.
-    folder: Formula
-
-    # Your app's homepage.
-    # Default is empty.
     homepage: "https://github.com/noqqe/veilig"
-
-    # Your app's description.
-    # Default is empty.
-    description: "veilig - written in go"
-
-    # SPDX identifier of your app's license.
-    # Default is empty.
+    description: "veilig - Toy TLS certificate viewer" 
     license: "MIT"
-
-    # Packages that conflict with your package.
-    conflicts:
-      - veilig
-
-    # So you can `brew test` your formula.
-    # Default is empty.
     test: |
       system "#{bin}/veilig --version"
-
-    # Custom install script for brew.
-    # Default is 'bin.install "program"'.
     install: |
       bin.install "veilig"
-
