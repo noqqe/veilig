@@ -6,12 +6,12 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"fmt"
-	"net/url"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/fatih/color"
+	"github.com/goware/urlx"
 	"github.com/urfave/cli/v2"
 )
 
@@ -76,8 +76,7 @@ func isFile(arg string) bool {
 
 // Check if the argument is a valid URL
 func isNetwork(arg string) bool {
-	_, err := url.Parse(arg)
-	fmt.Printf("Parsing URL %s...\n", err)
+	_, err := urlx.Parse(arg)
 	return err == nil
 }
 

@@ -29,7 +29,7 @@ tasks:
       - ../veilig certificates/doesnotexist.crt 1>/dev/null || true 
       - ../veilig certificates/expired.crt 1>/dev/null
       - ../veilig certificates/valid.crt 1>/dev/null
-      - ../veilig heise.de 1>/dev/null || true
+      - ../veilig heise.de 1>/dev/null 
       - ../veilig heise.de:443 1>/dev/null 
       - ../veilig https://heise.de 1>/dev/null 
       - ../veilig https://heise.de:443 1>/dev/null 

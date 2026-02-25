@@ -5,13 +5,10 @@ import (
 	"crypto/x509"
 	"fmt"
 	"net"
-	"net/url"
-	"regexp"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/fatih/color"
+	"github.com/goware/urlx"
 )
 
 var versions = map[uint16]string{
@@ -22,46 +19,25 @@ var versions = map[uint16]string{
 	tls.VersionTLS13: "TLS 1.3",
 }
 
-func isValidPortSuffix(s string) bool {
-	// Regular expression to match a string ending with ":port" where port is digits
-	re := regexp.MustCompile(`:(\d+)$`)
+func LoadCertificateFromURL(url string) ([]*x509.Certificate, string, error) {
 
-	matches := re.FindStringSubmatch(s)
-	if len(matches) == 0 {
-		return false
+	u, err := urlx.Parse(url)
+	if err != nil {
+		return nil, "", err
 	}
-
-	portStr := matches[1]
-	port, err := strconv.Atoi(portStr)
-	if err != nil || port < 1 || port > 65535 {
-		return false
-	}
-
-	return true
-}
-
-func LoadCertificateFromURL(ur string) ([]*x509.Certificate, string, error) {
-
-	if !strings.HasPrefix(ur, "https://") {
-		ur = "https://" + ur
-	}
-	u, err := url.Parse(ur)
-
-	fmt.Printf("Parsing URL %s...\n", u)
-	fmt.Printf("Host: %s\n", u.Host)
-	fmt.Printf("Scheme: %s\n", u.Scheme)
-	fmt.Printf("Port: %s\n", u.Port())
-
+	host, port, err := urlx.SplitHostPort(u)
 	if err != nil {
 		return nil, "", err
 	}
 
-	fmt.Printf("Connecting to %s...\n", u)
-	return LoadCertificateFromTLS(u)
+	if port == "" {
+		port = "443"
+	}
 
+	return LoadCertificateFromTLS(host, port)
 }
 
-func LoadCertificateFromTLS(url *url.URL) ([]*x509.Certificate, string, error) {
+func LoadCertificateFromTLS(host, port string) ([]*x509.Certificate, string, error) {
 
 	config := &tls.Config{
 		MinVersion:         tls.VersionSSL30,
@@ -72,14 +48,9 @@ func LoadCertificateFromTLS(url *url.URL) ([]*x509.Certificate, string, error) {
 		Timeout: time.Second * 2,
 	}
 
-	host := url.Host
-	if !isValidPortSuffix(url.Host) {
-		host = host + ":443"
-	}
-
-	conn, err := tls.DialWithDialer(&dialer, "tcp", host, config)
+	conn, err := tls.DialWithDialer(&dialer, "tcp", host+":"+port, config)
 	if err != nil {
-		return chain, url.Host, fmt.Errorf("could not connect to %s: %v", host, err)
+		return chain, host, fmt.Errorf("could not connect to %s: %v", host+":"+port, err)
 	}
 	defer conn.Close()
 	state := conn.ConnectionState()
@@ -89,5 +60,5 @@ func LoadCertificateFromTLS(url *url.URL) ([]*x509.Certificate, string, error) {
 	if len(conn.ConnectionState().PeerCertificates) > 0 {
 		chain = append(chain, conn.ConnectionState().PeerCertificates...)
 	}
-	return chain, url.Host, nil
+	return chain, host, nil
 }
