@@ -6,14 +6,12 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"fmt"
-	"net"
 	"net/url"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
-	color "github.com/fatih/color"
+	"github.com/fatih/color"
 	"github.com/urfave/cli/v2"
 )
 
@@ -77,28 +75,9 @@ func isFile(arg string) bool {
 }
 
 // Check if the argument is a valid URL
-func isURL(arg string) bool {
-	_, err := url.ParseRequestURI(arg)
-	return err == nil
-}
-
-// Check if the argument is in host:port format
-func isHostPort(arg string) bool {
-	hostPort := strings.Split(arg, ":")
-	if len(hostPort) != 2 {
-		return false
-	}
-	host := hostPort[0]
-	port := hostPort[1]
-
-	// Validate port
-	portNum, err := strconv.Atoi(port)
-	if err != nil || portNum < 1 || portNum > 65535 {
-		return false
-	}
-
-	// Check if the host can be resolved
-	_, err = net.LookupHost(host)
+func isNetwork(arg string) bool {
+	_, err := url.Parse(arg)
+	fmt.Printf("Parsing URL %s...\n", err)
 	return err == nil
 }
 
@@ -137,14 +116,8 @@ veilig https://lobste.rs
 					fmt.Println("Error loading certificate from file:", err)
 					os.Exit(1)
 				}
-			case isURL(arg):
+			case isNetwork(arg):
 				chain, dnsname, err = LoadCertificateFromURL(arg)
-				if err != nil {
-					fmt.Println("Error loading certificate from URL:", err)
-					os.Exit(1)
-				}
-			case isHostPort(arg):
-				chain, dnsname, err = LoadCertificateFromTLS(arg)
 				if err != nil {
 					fmt.Println("Error loading certificate from TLS:", err)
 					os.Exit(1)
